@@ -1,61 +1,13 @@
-//import OpenAI from 'openai';
-
 const OpenAI = require('openai');
-
 
 const tryParse = require('./helpers/try-parse');
 const isFunctionResponse = require('./helpers/is-function-response');
 const processOutputs = require('./helpers/process-outputs');
 const resolver = require('./helpers/resolver');
-
-
-const GPTContext = ({ context, sessionId }) => {
-
-  return {
-    hasSession: async () => {
-      return false;
-    },
-    getSession: async (sessionId) => {
-      return await context.get(String(sessionId));
-      // TODO touch ts
-    },
-    createSession: async ({ sessionId, previousId, ...rest }) => {
-
-      await context.set(String(sessionId), {
-        ts: new Date().toISOString(),
-        sessionId,
-        previousId,
-        ...rest
-      });
-    },
-    updateSession: async(sessionId, obj) => {
-      const current = await context.get(String(sessionId)) ?? {};
-      await context.set(String(sessionId), {
-        ...current,
-        ts: new Date().toISOString(),
-        ...obj
-      });
-    }
-  };
-};
-
+const updateTokens = require('./helpers/update-tokens');
+const GPTContext = require('./helpers/gpt-context');
 
 // DOC: UI element for dialog https://nodered.org/docs/creating-nodes/edit-dialog
-
-
-
-
-const updateTokens = (node, response) => {
-  const totalTokens = (node.context().get('tokens') ?? 0) + response.usage.total_tokens;
-  node.context().set('tokens', totalTokens);
-
-  node.status({
-    fill: 'green',
-    shape: 'dot',
-    text: `Tokens: ` + totalTokens
-  });
-};
-
 
 module.exports = function(RED) {
   function ChatGPTResponses(config) {
@@ -100,9 +52,6 @@ module.exports = function(RED) {
         node.warn(`Was not possible to extract a session id from msg payload, a session will not be created it will not be possible to follow up messages with ChatGPT`);
       }
 
-
-
-
       if (isFunctionResponse(msg)) {
         // HAMDLE MESSAGE RESPONSE
         console.log('answering to ', msg['chatgpt-function-call']);
@@ -132,7 +81,6 @@ module.exports = function(RED) {
 
         // update status
         updateTokens(node, response)
-
 
         send(processOutputs(response.output, promptDesign, msg, response));
         done();
@@ -173,8 +121,6 @@ module.exports = function(RED) {
           done(e);
           return;
         }
-
-        console.log('response plain message', response)
 
         // update status
         updateTokens(node, response);
