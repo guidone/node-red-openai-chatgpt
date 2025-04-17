@@ -1,0 +1,203 @@
+//import OpenAI from 'openai';
+
+const OpenAI = require('openai');
+
+
+const tryParse = require('./helpers/try-parse');
+const isFunctionResponse = require('./helpers/is-function-response');
+const processOutputs = require('./helpers/process-outputs');
+const resolver = require('./helpers/resolver');
+
+
+const GPTContext = ({ context, sessionId }) => {
+
+  return {
+    hasSession: async () => {
+      return false;
+    },
+    getSession: async (sessionId) => {
+      return await context.get(String(sessionId));
+      // TODO touch ts
+    },
+    createSession: async ({ sessionId, previousId, ...rest }) => {
+
+      await context.set(String(sessionId), {
+        ts: new Date().toISOString(),
+        sessionId,
+        previousId,
+        ...rest
+      });
+    },
+    updateSession: async(sessionId, obj) => {
+      const current = await context.get(String(sessionId)) ?? {};
+      await context.set(String(sessionId), {
+        ...current,
+        ts: new Date().toISOString(),
+        ...obj
+      });
+    }
+  };
+};
+
+
+// DOC: UI element for dialog https://nodered.org/docs/creating-nodes/edit-dialog
+
+
+
+
+const updateTokens = (node, response) => {
+  const totalTokens = (node.context().get('tokens') ?? 0) + response.usage.total_tokens;
+  node.context().set('tokens', totalTokens);
+
+  node.status({
+    fill: 'green',
+    shape: 'dot',
+    text: `Tokens: ` + totalTokens
+  });
+};
+
+
+module.exports = function(RED) {
+  function ChatGPTResponses(config) {
+    RED.nodes.createNode(this,config);
+    const node = this;
+    node.prompt = config.prompt;
+    node.sessionKey = config.sessionKey;
+    node.sessionKeyType = config.sessionKeyType;
+    node.messageKey = config.messageKey;
+    node.messageKeyType = config.messageKeyType;
+    let openai;
+
+    // Retrieve the config node
+    this.openAIKey = RED.nodes.getNode(config.openAIKey);
+    // Init openai
+    if (this.openAIKey && this.openAIKey.credentials?.apiKey) {
+      openai = new OpenAI({
+        apiKey: this.openAIKey.credentials.apiKey
+      });
+    } else {
+      node.error('Invalid or missing OpenAI API key');
+      return;
+    }
+
+    node.on('input', async function(msg, send, done) {
+
+      const promptDesign = tryParse(node.prompt);
+      if (!promptDesign) {
+        node.error('Invalid prompt');
+        return;
+      }
+
+      // resolve session and message payload
+      const sessionId = resolver(node.sessionKey, node.sessionKeyType, { msg, node });
+      const inputMessage = resolver(node.messageKey, node.messageKeyType, { msg, node });
+      console.log('Resolved content: sessionId: ', sessionId, 'message: ', inputMessage);
+
+      const context = GPTContext({ context: this.context().flow, sessionId });
+
+      // Warn if empty session id
+      if (!sessionId) {
+        node.warn(`Was not possible to extract a session id from msg payload, a session will not be created it will not be possible to follow up messages with ChatGPT`);
+      }
+
+
+
+
+      if (isFunctionResponse(msg)) {
+        // HAMDLE MESSAGE RESPONSE
+        console.log('answering to ', msg['chatgpt-function-call']);
+
+        const gptRequest = {
+          ...promptDesign,
+          input: [
+            {
+              type: "function_call_output",
+              call_id: msg['chatgpt-function-call'].call_id,
+              output: msg.payload ? msg.payload.toString() : null
+            }
+          ],
+          previous_response_id: msg['chatgpt-function-call'].previousId,
+          // override store flag
+          store: true
+        };
+
+        // execute call
+        let response;
+        try {
+          response = await openai.responses.create(gptRequest);
+        } catch(e) {
+          done(e);
+          return;
+        }
+
+        // update status
+        updateTokens(node, response)
+
+
+        send(processOutputs(response.output, promptDesign, msg, response));
+        done();
+
+      } else {
+        const session = await context.getSession(sessionId);
+
+        console.log('current session', session);
+
+        const gptRequest = {
+          ...promptDesign,
+          input: [
+            ...(promptDesign.input ? promptDesign.input : []),
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'input_text',
+                  text: inputMessage
+                }
+              ]
+            }
+          ],
+          // override store flag
+          store: true
+        };
+
+        // set previous
+        if (session) {
+          gptRequest.previous_response_id = session.previousId;
+        }
+
+        // execute call
+        let response;
+        try {
+          response = await openai.responses.create(gptRequest);
+        } catch(e) {
+          done(e);
+          return;
+        }
+
+        console.log('response plain message', response)
+
+        // update status
+        updateTokens(node, response);
+
+        // create or update current session
+        if (!session) {
+          // if no session identifier, do nothing
+          if (sessionId) {
+            await context.createSession({
+              sessionId,
+              previousId: response.id
+            });
+          }
+        } else {
+          // session exists, update it
+          await context.updateSession(sessionId, { previousId: response.id });
+        }
+
+        send(processOutputs(response.output, promptDesign, msg, response));
+        done();
+      }
+    });
+  }
+
+  RED.nodes.registerType('chat-gpt-responses', ChatGPTResponses);
+};

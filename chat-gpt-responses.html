@@ -1,0 +1,111 @@
+<script type="text/javascript">
+  const gptTryParse = str => {
+    let parsed;
+    try {
+      parsed = JSON.parse(str);
+
+      return parsed;
+    } catch(e) {
+      return null;
+    }
+  };
+
+
+  RED.nodes.registerType('chat-gpt-responses',{
+      category: 'function',
+      color: '#ffffff',
+      defaults: {
+        openAIKey: {value: '', type: 'open-ai-key' },
+        name: { value:'' },
+        prompt: { value: '' },
+        sessionKey: { value: '' },
+        sessionKeyType: { value: '' },
+        messageKey: { value: 'payload' },
+        messageKeyType: { value: 'msg' },
+        outputs: { value: 1 }
+      },
+      inputs: 1,
+      outputs: 1,
+      icon: 'chat-gpt-logo.svg',
+      label: function() {
+        return this.name || 'ChatGPT Responses';
+      },
+      oneditprepare: function() {
+        this.editor = RED.editor.createEditor({
+          id: 'node-input-example-editor',
+          mode: 'ace/mode/json',
+          value: this.prompt
+        });
+        $('#node-input-sessionKey').typedInput({
+          type:'msg',
+          types:['msg', 'flow','global'],
+          typeField: '#node-input-sessionKeyType'
+        });
+        $('#node-input-messageKey').typedInput({
+          type:'msg',
+          types:['msg', 'flow','global'],
+          typeField: '#node-input-messageKeyType'
+        });
+
+      },
+      oneditsave: function() {
+        this.prompt = this.editor.getValue();
+        this.editor.destroy();
+        delete this.editor;
+
+        let parsed;
+        try {
+          parsed = JSON.parse(this.prompt);
+        } catch(e) {
+          // invalid json
+        }
+        const functionTools = parsed && parsed.tools ? parsed.tools.filter(t => t.type === 'function').length : 0;
+        this.outputs = 1 + functionTools;
+      },
+      oneditcancel: function() {
+        this.editor.destroy();
+        delete this.editor;
+      },
+      outputLabels: function(index) {
+        if (index === 0) {
+          return 'ChatGPT response';
+        } else {
+          let parsed = gptTryParse(this.prompt);
+          if (parsed && Array.isArray(parsed.tools)) {
+            const funcs = parsed.tools.filter(t => t.type === 'function');
+            if (index <= funcs.length) {
+              return 'Function call ' + funcs[index - 1].name;
+            }
+          }
+        }
+      }
+  });
+</script>
+
+<script type="text/html" data-template-name="chat-gpt-responses">
+  <div class="form-row">
+    <input type="text" id="node-input-openAIKey">
+  </div>
+  <div class="form-row">
+    <label for="node-input-name">Name</label>
+    <input type="text" id="node-input-name" placeholder="Name">
+  </div>
+  <div class="form-row">
+    <label for="node-input-messageKey">Message key</label>
+    <input type="text" id="node-input-messageKey">
+    <input type="hidden" id="node-input-messageKeyType">
+  </div>
+  <div class="form-row">
+    <label for="node-input-sessionKey">Session key</label>
+    <input type="text" id="node-input-sessionKey">
+    <input type="hidden" id="node-input-sessionKeyType">
+  </div>
+  <div class="form-row">
+    <label>Prompt</label>
+    <div style="height: 350px; min-height:150px;" class="node-text-editor" id="node-input-example-editor"></div>
+  </div>
+</script>
+
+<script type="text/html" data-help-name="chat-gpt-responses">
+  <p>A simple node that converts the message payloads into all lower-case characters</p>
+</script>
