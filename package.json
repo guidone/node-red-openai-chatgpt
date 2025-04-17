@@ -1,11 +1,14 @@
 {
   "name": "node-red-openai-chatgpt",
+  "description": "A Node-RED extension to interact with OpenAI Responses API",
   "node-red": {
+    "version": ">=2.0.0",
     "nodes": {
       "chat-gpt-responses": "chat-gpt-responses.js",
       "open-ai-key": "open-ai.js"
     }
   },
+  "keywords": [ "node-red" ],
   "dependencies": {
     "lodash": "^4.17.21",
     "openai": "^4.94.0"

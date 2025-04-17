@@ -94,15 +94,24 @@
     <label for="node-input-messageKey">Message key</label>
     <input type="text" id="node-input-messageKey">
     <input type="hidden" id="node-input-messageKeyType">
+    <div  style="font-size: 0.9em;line-height: normal;color: #999999;margin-top: 5px;">Define they key and the context for the message to send to ChatGPT, generally its <em>"msg.payload"</em></div>
   </div>
   <div class="form-row">
     <label for="node-input-sessionKey">Session key</label>
     <input type="text" id="node-input-sessionKey">
     <input type="hidden" id="node-input-sessionKeyType">
+    <div style="font-size: 0.9em;line-height: normal;color: #999999;margin-top: 5px;">
+      Define they key and the context for the session <em>id</em>, it's used to keep track of the conversation in
+      ChatGPT and return answers based on previous meessage. It's generally an unique id which persists through the
+      messaging platform you're usine (i.e. "msg.session.id"). Leave blank for testing.
+    </div>
   </div>
   <div class="form-row">
     <label>Prompt</label>
     <div style="height: 350px; min-height:150px;" class="node-text-editor" id="node-input-example-editor"></div>
+    <div style="font-size: 0.9em;line-height: normal;color: #999999;margin-top: 5px;">
+      Copy and paste the JSON of the prompts created with <a href="https://platform.openai.com/playground/prompts?models=gpt-4.1" target="_blank" >Prompts Playground</a>.<br/>
+    </div>
   </div>
 </script>
 
