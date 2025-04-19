@@ -80,7 +80,7 @@ module.exports = function(RED) {
             {
               type: 'function_call_output',
               call_id: msg['chatgpt-function-call'].call_id,
-              output: msg.payload ? msg.payload.toString() : ''
+              output: msg.payload != null ? msg.payload.toString() : ''
             }
           ],
           previous_response_id: msg['chatgpt-function-call'].previousId,
