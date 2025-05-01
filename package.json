@@ -9,9 +9,12 @@
       "open-ai-key": "open-ai.js"
     }
   },
-  "keywords": [ "node-red" ],
+  "keywords": [
+    "node-red"
+  ],
   "dependencies": {
     "lodash": "^4.17.21",
     "openai": "^4.94.0"
-  }
+  },
+  "version": "0.1.0"
 }
