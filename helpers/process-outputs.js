@@ -10,7 +10,7 @@ const findOutputIndex = (json, functionName) => {
   return found + 1;
 };
 
-const processOutputs = (outputs, gptRequest, msg, response) => {
+const processOutputs = (outputs, gptRequest, msg, response, sessionId) => {
   const outputCount = 1 + (gptRequest.tools ?? []).filter(o => o.type === 'function').length;
 
   // collect responses and map to outputs
@@ -36,7 +36,8 @@ const processOutputs = (outputs, gptRequest, msg, response) => {
           payload: tryParse(obj.arguments),
           ['chatgpt-function-call']: {
             ...obj,
-            previousId: response.id
+            previousId: response.id,
+            sessionId
           }
         });
       }

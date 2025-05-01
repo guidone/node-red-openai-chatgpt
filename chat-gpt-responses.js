@@ -52,11 +52,20 @@ module.exports = function(RED) {
       }
 
       // resolve session and message payload
-      const sessionId = resolver(node.sessionKey, node.sessionKeyType, { msg, node });
+      const sessionId = resolver(
+        node.sessionKey,
+        node.sessionKeyType,
+        { msg, node },
+        msg?.['chatgpt-function-call']?.sessionId
+      );
       const inputMessage = resolver(node.messageKey, node.messageKeyType, { msg, node });
       console.log('Resolved content: sessionId: ', sessionId, 'message: ', inputMessage);
 
       const context = GPTContext({ context: this.context().flow, sessionId });
+
+      console.log('default sessionId', msg?.['chatgpt-function-call']?.sessionId);
+      console.log('sessionId', sessionId);
+      console.log('inputMessage', inputMessage);
 
       // Warn if empty session id
       if (!sessionId) {
@@ -86,7 +95,8 @@ module.exports = function(RED) {
           previous_response_id: msg['chatgpt-function-call'].previousId,
           // override store flag
           store: true,
-          tool_choice: 'auto'
+          tool_choice: 'auto',
+          parallel_tool_calls: false
         };
 
         console.log('Func gptRequest', gptRequest);
@@ -129,7 +139,8 @@ module.exports = function(RED) {
           ],
           // override store flag
           store: true,
-          tool_choice: 'auto'
+          tool_choice: 'auto',
+          parallel_tool_calls: false
         };
 
         // set previous
@@ -164,7 +175,7 @@ module.exports = function(RED) {
         await context.updateSession(sessionId, { previousId: response.id });
       }
 
-      send(processOutputs(response.output, promptDesign, msg, response));
+      send(processOutputs(response.output, promptDesign, msg, response, sessionId));
       done();
     });
   }
