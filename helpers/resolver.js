@@ -16,16 +16,17 @@ const getExtractionObject = (context, path) => {
   };
 };
 
-const resolver = (path, keyType, { node, msg } = {}) => {
+const resolver = (path, keyType, { node, msg } = {}, defaultValue) => {
   if (keyType === 'msg') {
-    return _.get(msg ?? {}, path);
+    return _.get(msg ?? {}, path) ?? defaultValue;
   } else if (keyType === 'flow') {
-    return _.get(getExtractionObject(node.context().flow, path), path);
+    return _.get(getExtractionObject(node.context().flow, path), path) ?? defaultValue;
   } else if (keyType === 'global') {
-    return _.get(getExtractionObject(node.context().global, path), path);
+    return _.get(getExtractionObject(node.context().global, path), path) ?? defaultValue;
   } else if (keyType === 'node') {
-    return _.get(getExtractionObject(node.context(), path), path);
+    return _.get(getExtractionObject(node.context(), path), path) ?? defaultValue;
   }
+  return defaultValue;
 };
 
 module.exports = resolver;
