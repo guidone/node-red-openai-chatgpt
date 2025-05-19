@@ -5,6 +5,7 @@
     "version": ">=2.0.0",
     "nodes": {
       "chat-gpt-responses": "chat-gpt-responses.js",
+      "provisioning-api": "provisioning-api.js",
       "open-ai-key": "open-ai.js"
     }
   },
