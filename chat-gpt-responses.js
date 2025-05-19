@@ -101,10 +101,22 @@ module.exports = function(RED) {
 
       } else {
 
+        let context = [];
+        if (msg.context) {
+          context = (Array.isArray(msg.context) ? msg.context : [msg.context])
+            .map(text => (
+              { 
+                role: 'user', 
+                content: [{ type: 'input_text', text}]
+              }
+            )); 
+        }
+
         const gptRequest = {
           ...promptDesign,
           input: [
             ...(promptDesign.input ? promptDesign.input : []),
+            ...context,
             {
               role: 'user',
               content: [
