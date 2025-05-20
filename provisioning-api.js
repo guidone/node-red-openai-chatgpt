@@ -5,17 +5,24 @@ module.exports = function (RED) {
     const node = this;
 
     node.on("input", async function (msg, send, done) {
-      const keyId = msg.keyId || config.keyId;
-      const keySecret = msg.keySecret || config.keySecret;
       const projectId = msg.projectId || config.projectId;
       const senderId = msg.senderId || config.senderId;
       const testNumber = msg.testNumber || config.testNumber;
       const payload = msg.payload || config.payload;
       const provisioningAction =
         msg.provisioningAction || config.provisioningAction;
+
+      // Retrieve the config node
+      this.papiCredentials = RED.nodes.getNode(config.papiCredentials);
+      console.log("papiCredentials", this.papiCredentials);
+      const keyId = this.papiCredentials.config.keyId;
+      const keySecret = this.papiCredentials.credentials.keySecret;
+      console.log("keyId", keyId);
+      console.log("keySecret", keySecret);
+
       if (!keyId || !keySecret) {
-        node.error("Missing required parameters", msg);
-        return;
+        node.error("Invalid or missing Sinch API key", msg);
+        done();
       }
 
       const authHeader =

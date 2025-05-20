@@ -6,7 +6,8 @@
     "nodes": {
       "chat-gpt-responses": "chat-gpt-responses.js",
       "provisioning-api": "provisioning-api.js",
-      "open-ai-key": "open-ai.js"
+      "open-ai-key": "open-ai.js",
+      "papi-config": "papi-config.js"
     }
   },
   "keywords": [

@@ -10,8 +10,7 @@
     },
     defaults: {
       name: { value: "" },
-      keyId: { value: "", required: true },
-      keySecret: { value: "", required: true },
+      papiCredentials: { value: "", type: "papi-config", required: true },
       projectId: { value: "" },
       senderId: { value: "" },
       testNumber: { value: "" },
@@ -45,15 +44,8 @@
   </div>
 
   <div class="form-row">
-    <label for="node-input-keyId"><i class="fa fa-key"></i> Key ID</label>
-    <input type="text" id="node-input-keyId" />
-  </div>
-
-  <div class="form-row">
-    <label for="node-input-keySecret"
-      ><i class="fa fa-lock"></i> Key Secret</label
-    >
-    <input type="password" id="node-input-keySecret" />
+    <label for="node-input-keyId"><i class="fa fa-key"></i> Papi config</label>
+    <input type="text" id="node-input-papiCredentials">
   </div>
 
   <div class="form-row">

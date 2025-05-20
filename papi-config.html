@@ -1,0 +1,30 @@
+<script type="text/javascript">
+  RED.nodes.registerType('papi-config',{
+    category: 'config',
+    defaults: {
+      name: { value: '' },
+      keyId: { value: '' },
+    },
+    label: function() {
+      return this.name;
+    },
+    credentials: {
+      keySecret: { type: 'password' }
+    }
+  });
+</script>
+
+<script type="text/html" data-template-name="papi-config">
+  <div class="form-row">
+    <label for="node-config-input-name">Name</label>
+    <input type="text" id="node-config-input-name">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-keyId">Key Id</label>
+    <input type="text" id="node-config-input-keyId">
+  </div>
+  <div class="form-row">
+    <label for="node-config-input-keySecret">Key Secret</label>
+    <input type="password" id="node-config-input-keySecret">
+  </div>
+</script>
