@@ -1,73 +1,145 @@
 <script type="text/javascript">
-  RED.nodes.registerType('provisioning-api', {
-    category: 'function',
-    color: '#a6bbcf',
+  RED.nodes.registerType("provisioning-api", {
+    category: "function",
+    color: "#a6bbcf",
     inputs: 1,
-    outputs: 1,
-    icon: 'font-awesome/fa-rocket',
+    outputs: 2,
+    icon: "font-awesome/fa-rocket",
     label: function () {
-      return this.name || 'Provisioning API';
+      return this.name || "Provisioning API";
     },
     defaults: {
-      name: { value: '' },
-      keyId: { value: '', required: true },
-      keySecret: { value: '', required: true },
-      projectId: { value: '' },
-      provisioningAction: { value: '' }
-    }
-    
+      name: { value: "" },
+      keyId: { value: "", required: true },
+      keySecret: { value: "", required: true },
+      projectId: { value: "" },
+      senderId: { value: "" },
+      testNumber: { value: "" },
+      provisioningAction: { value: "" },
+      payload: { value: "" },
+    },
+    outputLabels: ["Success", "Failure"],
+    oneditprepare: function () {
+      this.editor = RED.editor.createEditor({
+        id: "node-input-example-editor",
+        mode: "ace/mode/json",
+        value: this.payload,
+      });
+    },
+    oneditsave: function () {
+      this.payload = this.editor.getValue();
+      this.editor.destroy();
+      delete this.editor;
+    },
+    oneditcancel: function () {
+      this.editor.destroy();
+      delete this.editor;
+    },
   });
 </script>
 
 <script type="text/html" data-template-name="provisioning-api">
-<div class="form-row">
-  <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
-  <input type="text" id="node-input-name" placeholder="Name" />
-</div>
+  <div class="form-row">
+    <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+    <input type="text" id="node-input-name" placeholder="Name" />
+  </div>
 
-<div class="form-row">
-  <label for="node-input-keyId"><i class="fa fa-key"></i> Key ID</label>
-  <input type="text" id="node-input-keyId" />
-</div>
+  <div class="form-row">
+    <label for="node-input-keyId"><i class="fa fa-key"></i> Key ID</label>
+    <input type="text" id="node-input-keyId" />
+  </div>
 
-<div class="form-row">
-  <label for="node-input-keySecret"><i class="fa fa-lock"></i> Key Secret</label>
-  <input type="password" id="node-input-keySecret" />
-</div>
+  <div class="form-row">
+    <label for="node-input-keySecret"
+      ><i class="fa fa-lock"></i> Key Secret</label
+    >
+    <input type="password" id="node-input-keySecret" />
+  </div>
 
-<div class="form-row">
-  <label for="node-input-projectId"><i class="fa fa-folder"></i> Project ID</label>
-  <input type="text" id="node-input-projectId" />
-</div>
+  <div class="form-row">
+    <label for="node-input-projectId"
+      ><i class="fa fa-folder"></i> Project ID (optional)</label
+    >
+    <input type="text" id="node-input-projectId" />
+  </div>
 
-<div class="form-row">
-  <label for="node-input-provisioningAction">
-    <i class="fa fa-cogs"></i> Action
-  </label>
-  <select id="node-input-provisioningAction">
-    <option value="">Select action</option>
-    <option value="createBundle">Create Bundle</option>
-    <option value="createRCSSender">Create RCS Sender</option>
-    <option value="listWebhooks">List Webhooks</option>
-    <option value="addWebhook">Add Webhook</option>
-  </select>
-</div>
+  <div class="form-row">
+    <label for="node-input-senderId"
+      ><i class="fa fa-folder"></i> Sender ID (optional)</label
+    >
+    <input type="text" id="node-input-senderId" />
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-testNumber"
+      ><i class="fa fa-folder"></i> Test Number (optional)</label
+    >
+    <input type="text" id="node-input-testNumber" />
+  </div>
+
+  <div class="form-row">
+    <label for="node-input-provisioningAction">
+      <i class="fa fa-cogs"></i> Action
+    </label>
+    <select id="node-input-provisioningAction">
+      <option value="">Select action</option>
+      <option value="createBundle">Create Bundle</option>
+      <option value="createRCSSender">Create RCS Sender</option>
+      <option value="listWebhooks">List Webhooks</option>
+      <option value="addWebhook">Add Webhook</option>
+      <option value="addTestNumber">Add Test Number</option>
+      <option value="makeMeTester">Make me a tester</option>
+      <option value="addCommentRCSSender">Add Comment to RCS Sender</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label for="node-input-provisioningAction">
+      <i class="fa fa-cogs"></i> Payload
+    </label>
+    <div
+      style="height: 350px; min-height:150px;"
+      class="node-text-editor"
+      id="node-input-example-editor"
+    ></div>
+    <div
+      style="font-size: 0.9em;line-height: normal;color: #999999;margin-top: 5px;"
+    >
+      Create your papi payload here. You can copy and paste an example body from
+      <a
+        href="https://developers.sinch.com/docs/provisioning-api/api-reference/"
+        target="_blank"
+        > Provisioning API documentation</a
+      >.<br />
+    </div>
+  </div>
 </script>
 
 <script type="text/html" data-help-name="provisioning-api">
   <p>
-    This node is used to call <a href="https://developers.sinch.com/docs/provisioning-api/getting-started/" target="_blank">Sinch Provisioning API</a>. 
+    This node is used to call
+    <a
+      href="https://developers.sinch.com/docs/provisioning-api/getting-started/"
+      target="_blank"
+      >Sinch Provisioning API</a
+    >.
   </p>
-    <h3>Inputs</h3>
+  <h3>Inputs</h3>
   <dl class="message-properties">
-    <dt>
-      projectId <span class="property-type">string</span>
-    </dt>
+    <dt>projectId <span class="property-type">string</span></dt>
     <dd>project to perfrom the action on</dd>
-    <dt>
-      provisioningAction <span class="property-type">string</span>
-    </dt>
-    <dd>If not selected in the node configuration. The desired action can be passed as a string: <code>createBundle</code>, <code>createRCSSender</code>, <code>listWebhooks</code>, <code>addWebhook</code></dd>
+    <dt>senderId <span class="property-type">string</span></dt>
+    <dd>sender to perfrom the action on</dd>
+    <dt>testNumber <span class="property-type">string</span></dt>
+    <dd>test number to perfrom the action on</dd>
+    <dt>payload <span class="property-type">string</span></dt>
+    <dd>payload to be sent to the API</dd>
+    <dt>provisioningAction <span class="property-type">string</span></dt>
+    <dd>
+      If not selected in the node configuration. The desired action can be
+      passed as a string: <code>createBundle</code>,
+      <code>createRCSSender</code>, <code>listWebhooks</code>,
+      <code>addWebhook</code><code>, <code>addTestNumber</code>,
+      <code>makeMeTester</code>, <code>addCommentRCSSender</code>
+    </dd>
   </dl>
-
 </script>
