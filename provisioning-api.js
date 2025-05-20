@@ -4,12 +4,12 @@ module.exports = function(RED) {
     const node = this;
 
     node.on('input', async function (msg, send, done) {
-      const keyId = config.keyId || msg.keyId;
-      const keySecret = config.keySecret || msg.keySecret;
-      const projectId = config.projectId || msg.projectId;
+      const keyId = msg.keyId || config.keyId;
+      const keySecret = msg.keySecret || config.keySecret;
+      const projectId = msg.projectId || config.projectId;
       const provisioningAction = msg.provisioningAction || config.provisioningAction;
       const payload = msg.payload;
-      if (!keyId || !keySecret || !projectId) {
+      if (!keyId || !keySecret) {
         node.error("Missing required parameters", msg);
         return;
       }
@@ -58,7 +58,7 @@ module.exports = function(RED) {
           headers,
         });
 
-        console.log("RCS Sender response", listWebhooks);
+        console.log("List webhooks response", listWebhooks);
 
         if (!listWebhooks.ok) throw new Error("List webhooks failed: ", listWebhooks.statusText);
         response = await listWebhooks.json();
@@ -72,7 +72,7 @@ module.exports = function(RED) {
           body: JSON.stringify(payload)
         });
 
-        console.log("RCS Sender response", addWebhook);
+        console.log("addWebhook responses", addWebhook);
 
         if (!addWebhook.ok) throw new Error("Failed to add webhook to bundle: ", addWebhook.statusText);
         response = await addWebhook.json();
