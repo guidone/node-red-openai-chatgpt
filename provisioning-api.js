@@ -1,4 +1,4 @@
-const tryParse = require('./helpers/try-parse');
+const tryParse = require("./helpers/try-parse");
 module.exports = function (RED) {
   function ProvisioningApi(config) {
     RED.nodes.createNode(this, config);
@@ -8,17 +8,14 @@ module.exports = function (RED) {
       const projectId = msg.projectId || config.projectId;
       const senderId = msg.senderId || config.senderId;
       const testNumber = msg.testNumber || config.testNumber;
-      const payload = msg.payload || config.payload;
+      const payload = msg.payload;
       const provisioningAction =
         msg.provisioningAction || config.provisioningAction;
 
       // Retrieve the config node
       this.papiCredentials = RED.nodes.getNode(config.papiCredentials);
-      console.log("papiCredentials", this.papiCredentials);
       const keyId = this.papiCredentials.config.keyId;
       const keySecret = this.papiCredentials.credentials.keySecret;
-      console.log("keyId", keyId);
-      console.log("keySecret", keySecret);
 
       if (!keyId || !keySecret) {
         node.error("Invalid or missing Sinch API key", msg);
@@ -37,8 +34,8 @@ module.exports = function (RED) {
 
         // Create Bundle
         if (provisioningAction === "createBundle") {
-          if (!projectId) {
-            node.error("Missing projectId", msg);
+          if (!projectId || !payload) {
+            node.error("Missing projectId or payload", msg);
             done();
           }
           const bundleResponse = await fetch(
@@ -46,23 +43,23 @@ module.exports = function (RED) {
             {
               method: "POST",
               headers,
-              body: JSON.stringify(tryParse(payload)),
+              body: JSON.stringify(payload),
             }
           );
 
-          console.log("Bundle response", bundleResponse);
-
-          if (!bundleResponse.ok)
+          if (!bundleResponse.ok) {
+            const errorBody = await bundleResponse.json();
             throw new Error(
-              "Bundle creation failed: ",
-              bundleResponse.statusText
+              `Bundle creation failed: 
+              ${errorBody.resolution}`
             );
+          }
           response = await bundleResponse.json();
         }
         // Create RCS Sender
         if (provisioningAction === "createRCSSender") {
-          if (!projectId) {
-            node.error("Missing projectId", msg);
+          if (!projectId || !payload) {
+            node.error("Missing projectId or payload", msg);
             done();
           }
           const rcsResponse = await fetch(
@@ -70,19 +67,20 @@ module.exports = function (RED) {
             {
               method: "POST",
               headers,
-              body: JSON.stringify(tryParse(payload)),
+              body: JSON.stringify(payload),
             }
           );
 
-          console.log("RCS Sender response", rcsResponse);
-
-          if (!rcsResponse.ok)
+          if (!rcsResponse.ok) {
+            const errorBody = await rcsResponse.json();
             throw new Error(
-              "RCS sender creation failed: ",
-              rcsResponse.statusText
+              `RCS sender creation failed: 
+              ${errorBody.resolution}`
             );
+          }
           response = await rcsResponse.json();
         }
+
         // List webhooks for a provisioning bundle
         if (provisioningAction === "listWebhooks") {
           if (!projectId) {
@@ -97,36 +95,38 @@ module.exports = function (RED) {
             }
           );
 
-          console.log("List webhooks response", listWebhooks);
-
-          if (!listWebhooks.ok)
-            throw new Error("List webhooks failed: ", listWebhooks.statusText);
+          if (!listWebhooks.ok) {
+            const errorBody = await listWebhooks.json();
+            throw new Error(
+              `List webhooks failed: 
+              ${errorBody.resolution}`
+            );
+          }
           response = await listWebhooks.json();
         }
 
         // Add a webhook for a provisioning bundle
         if (provisioningAction === "addWebhook") {
-          if (!projectId) {
-            node.error("Missing projectId", msg);
+          if (!projectId || !payload) {
+            node.error("Missing projectId or payload", msg);
             done();
           }
-          console.log("payload", payload);
           const addWebhook = await fetch(
             `https://provisioning.api.sinch.com/v1/projects/${projectId}/webhooks`,
             {
               method: "POST",
               headers,
-              body: JSON.stringify(tryParse(payload)),
+              body: JSON.stringify(payload),
             }
           );
 
-          console.log("addWebhook responses", addWebhook);
-
-          if (!addWebhook.ok)
+          if (!addWebhook.ok) {
+            const errorBody = await addWebhook.json();
             throw new Error(
-              "Failed to add webhook to bundle: ",
-              addWebhook.statusText
+              `Add webhook failed: 
+              ${errorBody.resolution}`
             );
+        }
           response = await addWebhook.json();
         }
 
@@ -141,23 +141,23 @@ module.exports = function (RED) {
             {
               method: "POST",
               headers,
-              body: JSON.stringify(tryParse(payload)),
+              body: JSON.stringify(payload),
             }
           );
 
-          console.log("addTestNumber responses", addTestNumber);
-
-          if (!addTestNumber.ok)
+          if (!addTestNumber.ok) {
+            const errorBody = await addTestNumber.json();
             throw new Error(
-              "Failed to add webhook to bundle: ",
-              addTestNumber.statusText
+              `Add test number failed: 
+              ${errorBody.resolution}`
             );
+          }
           response = await addTestNumber.json();
         }
 
         // Trigger retry of make me a tester message
         if (provisioningAction === "makeMeTester") {
-            if (!projectId || !senderId || !testNumber) {
+          if (!projectId || !senderId || !testNumber) {
             node.error("Missing projectId, senderId or testNumber", msg);
             done();
           }
@@ -169,19 +169,19 @@ module.exports = function (RED) {
             }
           );
 
-          console.log("makeMeTester responses", makeMeTester);
-
-          if (!makeMeTester.ok)
+          if (!makeMeTester.ok) {
+            const errorBody = await makeMeTester.json();
             throw new Error(
-              "Failed to add webhook to bundle: ",
-              makeMeTester.statusText
+              `Make me tester failed: 
+              ${errorBody.resolution}`
             );
+          }
           response = await makeMeTester.json();
         }
 
         // Add comment to a RCS sender
         if (provisioningAction === "addCommentRCSSender") {
-            if (!projectId || !senderId) {
+          if (!projectId || !senderId) {
             node.error("Missing projectId or senderId", msg);
             done();
           }
@@ -190,26 +190,26 @@ module.exports = function (RED) {
             {
               method: "GET",
               headers,
-              body: JSON.stringify(tryParse(payload)),
+              body: JSON.stringify(payload),
             }
           );
 
-          console.log("addCommentRCSSender responses", addCommentRCSSender);
-
-          if (!addCommentRCSSender.ok)
+          if (!addCommentRCSSender.ok) {
+            const errorBody = await addCommentRCSSender.json();
             throw new Error(
-              "Failed to add webhook to bundle: ",
-              addCommentRCSSender.statusText
+              `Add comment to RCS sender failed: 
+              ${errorBody.resolution}`
             );
+          }
           response = await addCommentRCSSender.json();
         }
-
+        node.log("Provisioning response: ", response);
         msg.payload = response;
         send([msg, null]);
         if (done) done();
       } catch (err) {
         node.error("Provisioning error: " + err.message, msg);
-        send([null, {...msg, error: err.message }]);
+        send([null, { ...msg, error: err.message }]);
         if (done) done(err);
       }
     });

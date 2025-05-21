@@ -10,7 +10,7 @@
     },
     defaults: {
       name: { value: "" },
-      papiCredentials: { value: "", type: "papi-config", required: true },
+      papiCredentials: { value: {}, type: "papi-config", required: true },
       projectId: { value: "" },
       senderId: { value: "" },
       testNumber: { value: "" },
@@ -18,22 +18,22 @@
       payload: { value: "" },
     },
     outputLabels: ["Success", "Failure"],
-    oneditprepare: function () {
-      this.editor = RED.editor.createEditor({
-        id: "node-input-example-editor",
-        mode: "ace/mode/json",
-        value: this.payload,
-      });
-    },
-    oneditsave: function () {
-      this.payload = this.editor.getValue();
-      this.editor.destroy();
-      delete this.editor;
-    },
-    oneditcancel: function () {
-      this.editor.destroy();
-      delete this.editor;
-    },
+    // oneditprepare: function () {
+    //   this.editor = RED.editor.createEditor({
+    //     id: "node-input-example-editor",
+    //     mode: "ace/mode/json",
+    //     value: this.payload,
+    //   });
+    // },
+    // oneditsave: function () {
+    //   this.payload = this.editor.getValue();
+    //   this.editor.destroy();
+    //   delete this.editor;
+    // },
+    // oneditcancel: function () {
+    //   this.editor.destroy();
+    //   delete this.editor;
+    // },
   });
 </script>
 
@@ -84,7 +84,7 @@
       <option value="addCommentRCSSender">Add Comment to RCS Sender</option>
     </select>
   </div>
-  <div class="form-row">
+  <!-- <div class="form-row">
     <label for="node-input-provisioningAction">
       <i class="fa fa-cogs"></i> Payload
     </label>
@@ -103,7 +103,7 @@
         > Provisioning API documentation</a
       >.<br />
     </div>
-  </div>
+  </div> -->
 </script>
 
 <script type="text/html" data-help-name="provisioning-api">
