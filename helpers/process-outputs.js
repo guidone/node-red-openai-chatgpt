@@ -11,7 +11,7 @@ const findOutputIndex = (json, functionName) => {
 };
 
 const processOutputs = (outputs, gptRequest, msg, response, sessionId) => {
-  const outputCount = 1 + (gptRequest.tools ?? []).filter(o => o.type === 'function').length;
+  const outputCount = 2 + (gptRequest.tools ?? []).filter(o => o.type === 'function').length;
 
   // collect responses and map to outputs
   const output = Array(outputCount);

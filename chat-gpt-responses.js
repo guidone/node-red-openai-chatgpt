@@ -3,6 +3,7 @@ const OpenAI = require('openai');
 const tryParse = require('./helpers/try-parse');
 const isFunctionResponse = require('./helpers/is-function-response');
 const processOutputs = require('./helpers/process-outputs');
+const processError = require('./helpers/process-error');
 const resolver = require('./helpers/resolver');
 const updateTokens = require('./helpers/update-tokens');
 const GPTContext = require('./helpers/gpt-context');
@@ -105,7 +106,8 @@ module.exports = function(RED) {
         try {
           response = await openai.responses.create(gptRequest);
         } catch(e) {
-          done(e);
+          send(processError(e, promptDesign, msg, sessionId));
+          done();
           return;
         }
 
@@ -153,7 +155,8 @@ module.exports = function(RED) {
         try {
           response = await openai.responses.create(gptRequest);
         } catch(e) {
-          done(e);
+          send(processError(e, promptDesign, msg, sessionId));
+          done();
           return;
         }
       }

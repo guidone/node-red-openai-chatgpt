@@ -60,7 +60,7 @@
           // invalid json
         }
         const functionTools = parsed && parsed.tools ? parsed.tools.filter(t => t.type === 'function').length : 0;
-        this.outputs = 1 + functionTools;
+        this.outputs = 1 + 1 + functionTools; // error, gtp responses, gtp functions
       },
       oneditcancel: function() {
         this.editor.destroy();
@@ -69,6 +69,8 @@
       outputLabels: function(index) {
         if (index === 0) {
           return 'ChatGPT response';
+        } else if (index === (this.outputs - 1)) {
+          return 'ChatGPT error';
         } else {
           let parsed = gptTryParse(this.prompt);
           if (parsed && Array.isArray(parsed.tools)) {
