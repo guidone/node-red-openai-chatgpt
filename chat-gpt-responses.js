@@ -7,6 +7,7 @@ const processError = require('./helpers/process-error');
 const resolver = require('./helpers/resolver');
 const updateTokens = require('./helpers/update-tokens');
 const GPTContext = require('./helpers/gpt-context');
+const formatContext = require('./helpers/format-context');
 
 // DOCS:
 // UI element for dialog
@@ -100,8 +101,6 @@ module.exports = function(RED) {
           parallel_tool_calls: false
         };
 
-        console.log('Func gptRequest', gptRequest);
-
         // execute call
         try {
           response = await openai.responses.create(gptRequest);
@@ -113,22 +112,17 @@ module.exports = function(RED) {
 
       } else {
 
-        let context = [];
-        if (msg.context) {
-          context = (Array.isArray(msg.context) ? msg.context : [msg.context])
-            .map(text => (
-              { 
-                role: 'user', 
-                content: [{ type: 'input_text', text}]
-              }
-            )); 
-        }
+        const contextSystem = formatContext(msg.context?.system);
+        const contextAssistant = formatContext(msg.context?.assistant);
+        const contextUser = formatContext(msg.context?.user);
 
         const gptRequest = {
           ...promptDesign,
           input: [
             ...(promptDesign.input ? promptDesign.input : []),
-            ...context,
+            ...contextSystem,
+            ...contextAssistant,
+            ...contextUser,
             {
               role: 'user',
               content: [
