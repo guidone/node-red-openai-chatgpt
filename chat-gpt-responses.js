@@ -8,6 +8,8 @@ const resolver = require('./helpers/resolver');
 const updateTokens = require('./helpers/update-tokens');
 const GPTContext = require('./helpers/gpt-context');
 const formatContext = require('./helpers/format-context');
+const isAttachment = require('./helpers/is-attachment');
+const bufferToStream = require('./helpers/buffer-to-stream');
 
 // DOCS:
 // UI element for dialog
@@ -21,6 +23,9 @@ const formatContext = require('./helpers/format-context');
 //
 // OpenAPI conversation state
 // https://platform.openai.com/docs/guides/conversation-state?api-mode=responses
+//
+// OpenAPI upload file
+// https://platform.openai.com/docs/api-reference/files/create
 
 module.exports = function(RED) {
   function ChatGPTResponses(config) {
@@ -116,6 +121,41 @@ module.exports = function(RED) {
         const contextAssistant = formatContext(msg.context?.assistant);
         const contextUser = formatContext(msg.context?.user);
 
+        const userPrompt = {
+          role: 'user',
+          content: [
+            {
+              type: 'input_text',
+              text: inputMessage
+            }
+          ]
+        };
+
+        // upload attachments if any
+        const attachments = Array.isArray(msg.attachments) ? msg.attachments : [msg.attachments];
+        if (attachments.every(isAttachment)) {
+
+          let idx;
+          for(idx = 0; idx < attachments.length; idx++) {
+
+            const stream = bufferToStream(attachments[idx].content);
+            stream.path = attachments[idx].filename;
+
+            try {
+              const file = await openai.files.create({
+                file: stream,
+                purpose: 'assistants'
+              });
+              userPrompt.content.push({
+                type: 'input_image',
+                file_id: file.id
+              });
+            } catch (e) {
+              console.error('Error uploading file:', e);
+            }
+          }
+        }
+
         const gptRequest = {
           ...promptDesign,
           input: [
@@ -123,15 +163,7 @@ module.exports = function(RED) {
             ...contextSystem,
             ...contextAssistant,
             ...contextUser,
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'input_text',
-                  text: inputMessage
-                }
-              ]
-            }
+            userPrompt
           ],
           // override store flag
           store: true,

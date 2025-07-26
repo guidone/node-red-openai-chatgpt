@@ -10,6 +10,17 @@ const findOutputIndex = (json, functionName) => {
   return found + 1;
 };
 
+const tryParseResponse = str => {
+  if (str) {
+    try {
+      return JSON.parse(str.replace('```json', '').replace('```', '').trim());
+    } catch(e) {
+      return str;
+    }
+  }
+  return str;
+};
+
 const processOutputs = (outputs, gptRequest, msg, response, sessionId) => {
   const outputCount = 2 + (gptRequest.tools ?? []).filter(o => o.type === 'function').length;
 
@@ -22,7 +33,7 @@ const processOutputs = (outputs, gptRequest, msg, response, sessionId) => {
       }
       obj.content.forEach(o => {
         if (o.type === 'output_text') {
-          output[0].push({ ...msg, payload: o.text });
+          output[0].push({ ...msg, payload: tryParseResponse(o.text) });
         }
       });
     } else if (obj.type === 'function_call') {
